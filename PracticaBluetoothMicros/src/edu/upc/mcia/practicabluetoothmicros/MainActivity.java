@@ -71,7 +71,7 @@ public class MainActivity extends Activity implements BluetoothEventHandler.Blue
 	protected void onStart() {
 		super.onStart();
 		Log.d(TAG, "-- onStart --");
-		intentaConnectarAmbLaPlaca();
+		// intentaConnectarAmbLaPlaca();
 	}
 
 	@Override
@@ -148,8 +148,13 @@ public class MainActivity extends Activity implements BluetoothEventHandler.Blue
 	@Override
 	public void handleBluetoothEvent(Message msg) {
 		switch (msg.what) {
-		case ConnectionManager.ACTION_SEARCHING:
+		case ConnectionManager.ACTION_SEARCHING_DEVICE:
 			progressDialog.setMessage("Buscant el mòdul Bluetooth...");
+			break;
+		case ConnectionManager.ACTION_SEARCHING_FAILED:
+			String missatgeError = "Cal emparellar aquest dispositiu Android amb el mòdul Bluetooth!";
+			Log.e(TAG, missatgeError);
+			Toast.makeText(this, missatgeError, Toast.LENGTH_LONG).show();
 			break;
 		case ConnectionManager.ACTION_CONNECTING:
 			String str = "Connectant...";
@@ -173,6 +178,13 @@ public class MainActivity extends Activity implements BluetoothEventHandler.Blue
 		case ConnectionManager.ACTION_DISCONNECTED:
 			intentaConnectarAmbLaPlaca();
 			break;
+		case ConnectionManager.ACTION_RECEPTION:
+			processCommandReception((Integer) msg.obj);
+			break;
 		}
+	}
+
+	private void processCommandReception(int i) {
+
 	}
 }

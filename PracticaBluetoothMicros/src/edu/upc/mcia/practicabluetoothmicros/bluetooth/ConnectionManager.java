@@ -1,9 +1,7 @@
 package edu.upc.mcia.practicabluetoothmicros.bluetooth;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.UUID;
 
@@ -17,13 +15,12 @@ public class ConnectionManager {
 	// Constants
 	public static final String TAG = "MANAGER";
 	private final static UUID UUID_SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-	public static final int ACTION_SEARCHING = 99;
-	public static final int ACTION_CONNECTING = 98;
-	public static final int ACTION_CONNECTED = 97;
-	public static final int ACTION_DISCONNECTED = 96;
-	public static final int ACTION_RESPONSE_RIGHT = 95;
-	public static final int ACTION_RESPONSE_WRONG = 94;
-	public static final int ACTION_FROM_QUESTION = 93;
+	public static final int ACTION_SEARCHING_DEVICE = 1;
+	public static final int ACTION_SEARCHING_FAILED = 2;
+	public static final int ACTION_CONNECTING = 3;
+	public static final int ACTION_CONNECTED = 4;
+	public static final int ACTION_DISCONNECTED = 5;
+	public static final int ACTION_RECEPTION = 6;
 
 	// Bluetooth
 	private BluetoothAdapter bluetoothAdapter;
@@ -43,7 +40,7 @@ public class ConnectionManager {
 	}
 
 	public synchronized void turnOn() {
-		handler.obtainMessage(ACTION_SEARCHING).sendToTarget();
+		handler.obtainMessage(ACTION_SEARCHING_DEVICE).sendToTarget();
 		turnOff();
 		for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
 			if (device.getName().startsWith("RN42")) {
@@ -137,7 +134,7 @@ public class ConnectionManager {
 	private class CommunicationThread extends Thread {
 		public static final String TAG = "COMMUNICATE";
 		private final BluetoothSocket socket;
-		private final BufferedReader input;
+		private final InputStream input;
 		private final OutputStream output;
 
 		public CommunicationThread(BluetoothSocket bluetoothSocket) {
@@ -149,19 +146,19 @@ public class ConnectionManager {
 				tmpOut = socket.getOutputStream();
 			} catch (IOException e) {
 			}
-			input = new BufferedReader(new InputStreamReader(tmpIn));
+			input = tmpIn;
 			output = tmpOut;
 		}
 
 		public void run() {
 			Log.d(TAG, "-- Communication Thread started --");
 			handler.obtainMessage(ACTION_CONNECTED).sendToTarget();
-			String str;
+			int value;
 			try {
 				while (!forceDisconect) {
-					str = input.readLine();
-					Log.d(TAG, "@Rebut: " + str);
-					processResponse(str);
+					value = input.read();
+					Log.d(TAG, "@Rebut: 0x" + Integer.toHexString(value));
+					handler.obtainMessage(ACTION_RECEPTION, value).sendToTarget();
 				}
 			} catch (Exception e) {
 			}
@@ -170,23 +167,6 @@ public class ConnectionManager {
 				handler.obtainMessage(ACTION_DISCONNECTED).sendToTarget();
 			}
 			Log.d(TAG, "-- Communication Thread closed --");
-		}
-
-		private void processResponse(String str) {
-			try {
-				String aux = str.toLowerCase();
-				if (aux.startsWith("ack")) {// ignore?
-				} else if (aux.startsWith("nack")) {// re-send send last command? better not
-				} else if (aux.startsWith("right")) {
-					handler.obtainMessage(ACTION_RESPONSE_RIGHT, str).sendToTarget();
-				} else if (aux.startsWith("wrong")) {
-					handler.obtainMessage(ACTION_RESPONSE_WRONG, str).sendToTarget();
-				} else if (aux.startsWith("quest")) {
-					handler.obtainMessage(ACTION_FROM_QUESTION, str).sendToTarget();
-				}
-			} catch (Exception ex) {
-				Log.e(TAG, "Error processant: " + ex.getMessage());
-			}
 		}
 
 		public void write(int data) throws Exception {
