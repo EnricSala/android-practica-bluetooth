@@ -11,88 +11,115 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:background="@drawable/layout_background"
-        android:orientation="vertical"
-        android:padding="32dp" >
-
-        <TextView
-            android:id="@+id/textView1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="Indicadors"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:layout_centerInParent="true"
+        android:orientation="vertical" >
 
         <LinearLayout
-            android:id="@+id/linearLayout1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" >
-
-            <RadioButton
-                android:id="@+id/radioA1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" " />
-
-            <RadioButton
-                android:id="@+id/radioA2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" " />
-
-            <RadioButton
-                android:id="@+id/radioA3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" " />
-
-            <RadioButton
-                android:id="@+id/radioA4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" " />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/TextView2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="30dp"
-            android:text="Controls"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:background="@drawable/layout_background"
+            android:orientation="vertical"
+            android:padding="26dp" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="4dp"
+                android:text="Indicadors"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+
+                <RadioButton
+                    android:id="@+id/radio1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:text=" " />
+
+                <RadioButton
+                    android:id="@+id/radio2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:text=" " />
+
+                <RadioButton
+                    android:id="@+id/radio3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:text=" " />
+
+                <RadioButton
+                    android:id="@+id/radio4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:text=" " />
+
+            </LinearLayout>
+        </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/linearLayout2"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" >
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:background="@drawable/layout_background"
+            android:orientation="vertical"
+            android:padding="26dp" >
 
-            <RadioButton
-                android:id="@+id/radioB1"
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" " />
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="4dp"
+                android:text="Controls"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
-            <RadioButton
-                android:id="@+id/radioB2"
+            <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" " />
+                android:layout_height="wrap_content" >
 
-            <RadioButton
-                android:id="@+id/radioB3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" " />
+                <CheckBox
+                    android:id="@+id/check1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" " />
 
-            <RadioButton
-                android:id="@+id/radioB4"
+                <CheckBox
+                    android:id="@+id/check2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" " />
+
+                <CheckBox
+                    android:id="@+id/check3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" " />
+
+                <CheckBox
+                    android:id="@+id/check4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" " />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/sendButton"
+                style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" " />
+                android:layout_height="32dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:text="Envia" />
+
         </LinearLayout>
+
     </LinearLayout>
 
 </RelativeLayout>

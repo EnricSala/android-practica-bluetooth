@@ -3,6 +3,7 @@ package edu.upc.mcia.practicabluetoothmicros.bluetooth;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Locale;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothAdapter;
@@ -43,7 +44,7 @@ public class ConnectionManager {
 		handler.obtainMessage(ACTION_SEARCHING_DEVICE).sendToTarget();
 		turnOff();
 		for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
-			if (device.getName().startsWith("RN42")) {
+			if (device.getName().startsWith("RN42") || device.getName().startsWith("RN-42")) {
 				// Si es troba un RN42, inicia Thread de connexio
 				Log.d(TAG, "S'ha trobat el RN-42");
 				connectThread = new ConnectThread(device);
@@ -52,6 +53,7 @@ public class ConnectionManager {
 			}
 		}
 		Log.e(TAG, "NO ES TROBA EL RN-42!");
+		handler.obtainMessage(ACTION_SEARCHING_FAILED).sendToTarget();
 	}
 
 	public synchronized void turnOff() {
@@ -66,7 +68,7 @@ public class ConnectionManager {
 		}
 	}
 
-	public synchronized void sendCommand(int command) throws Exception {
+	public synchronized void sendCommand(Command command) throws Exception {
 		communicationThread.write(command);
 	}
 
@@ -157,8 +159,8 @@ public class ConnectionManager {
 			try {
 				while (!forceDisconect) {
 					value = input.read();
-					Log.d(TAG, "@Rebut: 0x" + Integer.toHexString(value));
-					handler.obtainMessage(ACTION_RECEPTION, value).sendToTarget();
+					Log.d(TAG, "@Rebut: 0x0" + Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
+					handler.obtainMessage(ACTION_RECEPTION, Command.decode(value)).sendToTarget();
 				}
 			} catch (Exception e) {
 			}
@@ -169,8 +171,8 @@ public class ConnectionManager {
 			Log.d(TAG, "-- Communication Thread closed --");
 		}
 
-		public void write(int data) throws Exception {
-			output.write(0x00FF & data);
+		public void write(Command command) throws Exception {
+			output.write(0x0F & command.encode());
 		}
 
 		public void cancel() {
