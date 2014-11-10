@@ -3,6 +3,14 @@ Pràctica de Micros - Bluetooth
 
 Applicació per comunicar amb el micro per Bluetooth.
 
+Com instal·lar
+----------
+
+1. Copiar l'arxiu .apk al dispositiu Android.
+
+2. Anar a Configuració > Seguretat i habilitar els origens desconeguts.
+
+3. Buscar l'arxiu .apk dins el dispositiu i instal·lar-lo.
 
 Funcionament
 ----------
