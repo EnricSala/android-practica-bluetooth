@@ -10,11 +10,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
+import edu.upc.mcia.practicabluetoothmicros.bluetooth.BluetoothEventHandler.BluetoothEventListener;
 
 public class ConnectionManager {
 
 	// Constants
-	public static final String TAG = "MANAGER";
+	public static final String TAG = "BT_MANAGER";
 	private final static UUID UUID_SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 	public static final int ACTION_SEARCHING_DEVICE = 1;
 	public static final int ACTION_SEARCHING_FAILED = 2;
@@ -34,7 +35,7 @@ public class ConnectionManager {
 	private BluetoothEventHandler handler;
 	private static volatile boolean forceDisconect;
 
-	public ConnectionManager(BluetoothAdapter bluetoothAdapter, BluetoothEventHandler.BluetoothEventListener listener) {
+	public ConnectionManager(BluetoothAdapter bluetoothAdapter, BluetoothEventListener listener) {
 		forceDisconect = false;
 		this.bluetoothAdapter = bluetoothAdapter;
 		handler = new BluetoothEventHandler(listener);
@@ -44,7 +45,8 @@ public class ConnectionManager {
 		handler.obtainMessage(ACTION_SEARCHING_DEVICE).sendToTarget();
 		turnOff();
 		for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
-			if (device.getName().startsWith("RN42") || device.getName().startsWith("RN-42")) {
+			// if (device.getName().startsWith("RN42") || device.getName().startsWith("RN-42") || device.getName().startsWith("RN")) {
+			if (device.getName().startsWith("RN")) {
 				// Si es troba un RN42, inicia Thread de connexio
 				Log.d(TAG, "S'ha trobat el RN-42");
 				connectThread = new ConnectThread(device);
