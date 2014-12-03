@@ -22,7 +22,8 @@ public class ConnectionManager {
 	public static final int ACTION_CONNECTING = 3;
 	public static final int ACTION_CONNECTED = 4;
 	public static final int ACTION_DISCONNECTED = 5;
-	public static final int ACTION_RECEPTION = 6;
+	public static final int ACTION_BITS_RECEPTION = 6;
+	public static final int ACTION_ARRAY_RECEPTION = 7;
 
 	// Bluetooth
 	private BluetoothAdapter bluetoothAdapter;
@@ -162,7 +163,7 @@ public class ConnectionManager {
 				while (!forceDisconect) {
 					value = input.read();
 					Log.d(TAG, "@Rebut: 0x0" + Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
-					handler.obtainMessage(ACTION_RECEPTION, Command.decode(value)).sendToTarget();
+					handler.obtainMessage(ACTION_BITS_RECEPTION, Command.decode(value)).sendToTarget();
 				}
 			} catch (Exception e) {
 			}
