@@ -1,10 +1,9 @@
 package edu.upc.mcia.practicabluetoothmicros.fragment;
 
-import java.util.Locale;
-
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.support.v13.app.FragmentPagerAdapter;
+import edu.upc.mcia.practicabluetoothmicros.BytesFragment;
 
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
@@ -24,12 +23,12 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 		switch (position) {
 		case 0:
 			if (fragmentCache[0] == null) {
-				fragmentCache[0] = LedsFragment.newInstance();
+				fragmentCache[0] = BitsFragment.newInstance();
 			}
 			return fragmentCache[0];
 		case 1:
 			if (fragmentCache[1] == null) {
-				fragmentCache[1] = LedsFragment.newInstance();
+				fragmentCache[1] = BytesFragment.newInstance();
 			}
 			return fragmentCache[1];
 		}
@@ -43,7 +42,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
 	@Override
 	public CharSequence getPageTitle(int position) {
-		Locale loc = Locale.ENGLISH;
+		// Locale loc = Locale.ENGLISH;
 		switch (position) {
 		case 0:
 			return "Bits"; // getString(R.string.title_section1).toUpperCase(loc);

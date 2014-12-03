@@ -3,7 +3,7 @@
     android:id="@+id/RelativeLayout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="edu.upc.mcia.practicabluetoothmicros.fragment.LedsFragment" >
+    tools:context="edu.upc.mcia.practicabluetoothmicros.fragment.BitsFragment" >
 
     <TextView
         android:layout_width="wrap_content"

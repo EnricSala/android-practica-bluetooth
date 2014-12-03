@@ -5,12 +5,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 import edu.upc.mcia.practicabluetoothmicros.bluetooth.BluetoothEventHandler.BluetoothEventListener;
+import edu.upc.mcia.practicabluetoothmicros.command.BitsCommand;
 
 public class ConnectionManager {
 
@@ -34,10 +36,11 @@ public class ConnectionManager {
 
 	// Handlers & Events
 	private BluetoothEventHandler handler;
-	private static volatile boolean forceDisconect;
+	// private static volatile boolean forceDisconect;
+	private AtomicBoolean forceDisconnect;
 
 	public ConnectionManager(BluetoothAdapter bluetoothAdapter, BluetoothEventListener listener) {
-		forceDisconect = false;
+		forceDisconnect = new AtomicBoolean(false);
 		this.bluetoothAdapter = bluetoothAdapter;
 		handler = new BluetoothEventHandler(listener);
 	}
@@ -60,7 +63,7 @@ public class ConnectionManager {
 	}
 
 	public synchronized void turnOff() {
-		forceDisconect = true;
+		forceDisconnect.set(true);
 		if (communicationThread != null) {
 			communicationThread.cancel();
 			communicationThread = null;
@@ -71,7 +74,7 @@ public class ConnectionManager {
 		}
 	}
 
-	public synchronized void sendCommand(Command command) throws Exception {
+	public synchronized void sendCommand(BitsCommand command) throws Exception {
 		communicationThread.write(command);
 	}
 
@@ -83,7 +86,7 @@ public class ConnectionManager {
 		private final BluetoothDevice device;
 
 		public ConnectThread(BluetoothDevice bluetoothDevice) {
-			forceDisconect = false;
+			forceDisconnect.set(false);
 			BluetoothSocket temp = null;
 			device = bluetoothDevice;
 			try {
@@ -104,7 +107,7 @@ public class ConnectionManager {
 			Log.d(TAG, "-- Connect Thread started --");
 			bluetoothAdapter.cancelDiscovery();
 			handler.obtainMessage(ACTION_CONNECTING, retryCount, 0).sendToTarget();
-			while (!connexioEstablerta && !forceDisconect) {
+			while (!connexioEstablerta && !forceDisconnect.get()) {
 				try {
 					socket.connect();
 					connexioEstablerta = true;
@@ -160,21 +163,21 @@ public class ConnectionManager {
 			handler.obtainMessage(ACTION_CONNECTED).sendToTarget();
 			int value;
 			try {
-				while (!forceDisconect) {
+				while (!forceDisconnect.get()) {
 					value = input.read();
 					Log.d(TAG, "@Rebut: 0x0" + Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
-					handler.obtainMessage(ACTION_BITS_RECEPTION, Command.decode(value)).sendToTarget();
+					handler.obtainMessage(ACTION_BITS_RECEPTION, BitsCommand.decode(value)).sendToTarget();
 				}
 			} catch (Exception e) {
 			}
-			if (!forceDisconect) {
+			if (!forceDisconnect.get()) {
 				Log.w(TAG, "S'ha perdut la connexio bluetooth!");
 				handler.obtainMessage(ACTION_DISCONNECTED).sendToTarget();
 			}
 			Log.d(TAG, "-- Communication Thread closed --");
 		}
 
-		public void write(Command command) throws Exception {
+		public void write(BitsCommand command) throws Exception {
 			output.write(0x0F & command.encode());
 		}
 

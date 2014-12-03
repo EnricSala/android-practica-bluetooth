@@ -10,24 +10,24 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.RadioButton;
 import edu.upc.mcia.practicabluetoothmicros.R;
-import edu.upc.mcia.practicabluetoothmicros.bluetooth.Command;
+import edu.upc.mcia.practicabluetoothmicros.command.BitsCommand;
 
-public class LedsFragment extends Fragment {
+public class BitsFragment extends Fragment {
 
-	private OnLedsFragmentListener listener;
+	private OnBitsFragmentListener listener;
 
 	// Boolean indicators and controls
 	private RadioButton[] indicators;
 	private CheckBox[] controls;
 
-	public static LedsFragment newInstance() {
-		LedsFragment fragment = new LedsFragment();
+	public static BitsFragment newInstance() {
+		BitsFragment fragment = new BitsFragment();
 		Bundle args = new Bundle();
 		fragment.setArguments(args);
 		return fragment;
 	}
 
-	public LedsFragment() {
+	public BitsFragment() {
 		// Required empty public constructor
 	}
 
@@ -42,7 +42,7 @@ public class LedsFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
-		View view = inflater.inflate(R.layout.fragment_leds, container, false);
+		View view = inflater.inflate(R.layout.fragment_bits, container, false);
 
 		// Get references to the indicators
 		indicators = new RadioButton[4];
@@ -73,7 +73,7 @@ public class LedsFragment extends Fragment {
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 		try {
-			listener = (OnLedsFragmentListener) activity;
+			listener = (OnBitsFragmentListener) activity;
 		} catch (ClassCastException e) {
 			throw new ClassCastException(activity.toString() + " must implement the Listener");
 		}
@@ -87,7 +87,7 @@ public class LedsFragment extends Fragment {
 
 	private void onButtonPressed() {
 		if (listener != null) {
-			Command command = new Command();
+			BitsCommand command = new BitsCommand();
 			command.bit0 = controls[0].isChecked();
 			command.bit1 = controls[1].isChecked();
 			command.bit2 = controls[2].isChecked();
@@ -96,16 +96,16 @@ public class LedsFragment extends Fragment {
 		}
 	}
 
-	public void displayReceivedCommand(Command command) {
+	public void displayReceivedCommand(BitsCommand command) {
 		indicators[0].setChecked(command.bit0);
 		indicators[1].setChecked(command.bit1);
 		indicators[2].setChecked(command.bit2);
 		indicators[3].setChecked(command.bit3);
 	}
 
-	public interface OnLedsFragmentListener {
+	public interface OnBitsFragmentListener {
 
-		public void onSendBitsCommand(Command command);
+		public void onSendBitsCommand(BitsCommand command);
 
 	}
 

@@ -1,6 +1,6 @@
-package edu.upc.mcia.practicabluetoothmicros.bluetooth;
+package edu.upc.mcia.practicabluetoothmicros.command;
 
-public class Command {
+public class BitsCommand {
 
 	public boolean bit0;
 	public boolean bit1;
@@ -16,8 +16,8 @@ public class Command {
 		return value;
 	}
 	
-	public static Command decode(int value) {
-		Command command = new Command();
+	public static BitsCommand decode(int value) {
+		BitsCommand command = new BitsCommand();
 		command.bit0 = (value & 0x01) != 0;
 		command.bit1 = (value & 0x02) != 0;
 		command.bit2 = (value & 0x04) != 0;

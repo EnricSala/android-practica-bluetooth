@@ -18,12 +18,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 import edu.upc.mcia.practicabluetoothmicros.bluetooth.BluetoothEventHandler;
-import edu.upc.mcia.practicabluetoothmicros.bluetooth.Command;
 import edu.upc.mcia.practicabluetoothmicros.bluetooth.ConnectionManager;
-import edu.upc.mcia.practicabluetoothmicros.fragment.LedsFragment;
+import edu.upc.mcia.practicabluetoothmicros.command.BitsCommand;
+import edu.upc.mcia.practicabluetoothmicros.command.BytesCommand;
+import edu.upc.mcia.practicabluetoothmicros.fragment.BitsFragment;
 import edu.upc.mcia.practicabluetoothmicros.fragment.SectionsPagerAdapter;
 
-public class MainActivity extends Activity implements ActionBar.TabListener, BluetoothEventHandler.BluetoothEventListener, LedsFragment.OnLedsFragmentListener {
+public class MainActivity extends Activity implements ActionBar.TabListener, BluetoothEventHandler.BluetoothEventListener, BitsFragment.OnBitsFragmentListener, BytesFragment.OnBytesFragmentListener {
 
 	// Constants
 	private final static String TAG = "UI";
@@ -37,7 +38,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	private int activeTab;
 
 	// Fragments
-	private LedsFragment ledsFragment;
+	private BitsFragment ledsFragment;
 
 	// Dialogs
 	private ProgressDialog progressDialog;
@@ -141,7 +142,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	protected void onStart() {
 		super.onStart();
 		Log.d(TAG, "-- onStart --");
-		// intentaConnectarAmbLaPlaca();
+		intentaConnectarAmbLaPlaca();
 	}
 
 	@Override
@@ -238,7 +239,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 			intentaConnectarAmbLaPlaca();
 			break;
 		case ConnectionManager.ACTION_BITS_RECEPTION:
-			processBitsCommandFromModule((Command) msg.obj);
+			processBitsCommandFromModule((BitsCommand) msg.obj);
 			break;
 		}
 	}
@@ -281,15 +282,20 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 		}.start();
 	}
 
-	private void processBitsCommandFromModule(Command command) {
+	// ////////////////////////////////////////////////////////////////////////
+	//
+	// Events of Bits tab
+	//
+	// ////////////////////////////////////////////////////////////////////////
+	private void processBitsCommandFromModule(BitsCommand command) {
 		if (activeTab == TAB_BITS) {
-			LedsFragment fragment = (LedsFragment) sectionsPagerAdapter.getItem(TAB_BITS);
+			BitsFragment fragment = (BitsFragment) sectionsPagerAdapter.getItem(TAB_BITS);
 			fragment.displayReceivedCommand(command);
 		}
 	}
 
 	@Override
-	public void onSendBitsCommand(Command command) {
+	public void onSendBitsCommand(BitsCommand command) {
 		try {
 			Log.i(TAG, "Comanda: " + command);
 			connectionManager.sendCommand(command);
@@ -297,6 +303,30 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 			Log.e(TAG, "Error enviant comanda: " + e);
 			Toast.makeText(this, "Error enviant comanda: " + command, Toast.LENGTH_SHORT).show();
 		}
+	}
+
+	// ////////////////////////////////////////////////////////////////////////
+	//
+	// Events of Bytes tab
+	//
+	// ////////////////////////////////////////////////////////////////////////
+
+	private void processBytesFromModule(BytesCommand bytes) {
+		if (activeTab == TAB_BYTES) {
+			// BytesFragment fragment = (BytesFragment) sectionsPagerAdapter.getItem(TAB_BYTES);
+			// fragment.displayReceivedCommand(command);
+		}
+	}
+
+	@Override
+	public void onSendBytesCommand(BytesCommand command) {
+		// try {
+		// Log.i(TAG, "Bytes: " + bytes);
+		// connectionManager.sendCommand(bytes);
+		// } catch (Exception e) {
+		// Log.e(TAG, "Error enviant comanda: " + e);
+		// Toast.makeText(this, "Error enviant comanda: " + command, Toast.LENGTH_SHORT).show();
+		// }
 	}
 
 }
