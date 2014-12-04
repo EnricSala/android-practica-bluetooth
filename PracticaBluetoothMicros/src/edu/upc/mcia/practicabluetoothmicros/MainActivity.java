@@ -22,6 +22,7 @@ import edu.upc.mcia.practicabluetoothmicros.bluetooth.ConnectionManager;
 import edu.upc.mcia.practicabluetoothmicros.command.BitsCommand;
 import edu.upc.mcia.practicabluetoothmicros.command.BytesCommand;
 import edu.upc.mcia.practicabluetoothmicros.fragment.BitsFragment;
+import edu.upc.mcia.practicabluetoothmicros.fragment.BytesFragment;
 import edu.upc.mcia.practicabluetoothmicros.fragment.SectionsPagerAdapter;
 
 public class MainActivity extends Activity implements ActionBar.TabListener, BluetoothEventHandler.BluetoothEventListener, BitsFragment.OnBitsFragmentListener, BytesFragment.OnBytesFragmentListener {
@@ -142,7 +143,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	protected void onStart() {
 		super.onStart();
 		Log.d(TAG, "-- onStart --");
-		intentaConnectarAmbLaPlaca();
+		// intentaConnectarAmbLaPlaca();
 	}
 
 	@Override

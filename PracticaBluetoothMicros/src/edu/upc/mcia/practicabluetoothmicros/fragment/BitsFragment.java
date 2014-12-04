@@ -14,6 +14,7 @@ import edu.upc.mcia.practicabluetoothmicros.command.BitsCommand;
 
 public class BitsFragment extends Fragment {
 
+	// Listener
 	private OnBitsFragmentListener listener;
 
 	// Boolean indicators and controls
@@ -75,7 +76,7 @@ public class BitsFragment extends Fragment {
 		try {
 			listener = (OnBitsFragmentListener) activity;
 		} catch (ClassCastException e) {
-			throw new ClassCastException(activity.toString() + " must implement the Listener");
+			throw new ClassCastException(activity.toString() + " must implement OnBitsFragmentListener");
 		}
 	}
 

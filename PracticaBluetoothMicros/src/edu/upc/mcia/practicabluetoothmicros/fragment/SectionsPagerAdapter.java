@@ -3,7 +3,6 @@ package edu.upc.mcia.practicabluetoothmicros.fragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.support.v13.app.FragmentPagerAdapter;
-import edu.upc.mcia.practicabluetoothmicros.BytesFragment;
 
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
