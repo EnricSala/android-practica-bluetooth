@@ -1,5 +1,7 @@
 package edu.upc.mcia.practicabluetoothmicros;
 
+import java.util.Arrays;
+
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -30,16 +32,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	// Constants
 	private final static String TAG = "UI";
 	private final static int ENABLE_BLUETOOTH_REQUEST = 30862;
-	private final static int TAB_BITS = 0;
-	private final static int TAB_BYTES = 1;
 
 	// Navigation support
 	private SectionsPagerAdapter sectionsPagerAdapter;
 	private ViewPager viewPager;
 	private int activeTab;
-
-	// Fragments
-	private BitsFragment ledsFragment;
 
 	// Dialogs
 	private ProgressDialog progressDialog;
@@ -53,15 +50,15 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	private BluetoothAdapter bluetoothAdapter;
 	private ConnectionManager connectionManager;
 
-	// // Boolean indicators and controls
-	// private RadioButton[] indicators;
-	// private CheckBox[] controls;
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		Log.d(TAG, "-- onCreate --");
+
+		// Create bluetooth connection manager
+		bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		connectionManager = new ConnectionManager(bluetoothAdapter, this);
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
@@ -99,15 +96,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 		tickDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(tickBitmap, 75, 75, true));
 		Bitmap crossBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.ic_creu_vermella)).getBitmap();
 		errorDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(crossBitmap, 75, 75, true));
-
-		// Create bluetooth connection manager
-		bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-		connectionManager = new ConnectionManager(bluetoothAdapter, this);
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
+		// Inflate the menu; this adds items to the action bar if it is present
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
@@ -116,7 +109,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle action bar item clicks here. The action bar will
 		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
+		// as you specify a parent activity in AndroidManifest.xml
 		int id = item.getItemId();
 		if (id == R.id.action_settings) {
 			return true;
@@ -126,9 +119,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 
 	@Override
 	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-		// When the given tab is selected, switch to the corresponding page in the ViewPager.
+		// When the given tab is selected, switch to the corresponding page in the ViewPager
 		viewPager.setCurrentItem(tab.getPosition());
 		activeTab = tab.getPosition();
+
+		// Change reception mode
+		switch (activeTab) {
+		case SectionsPagerAdapter.TAB_BITS:
+			connectionManager.setReceptionMode(ConnectionManager.MODE_BITS);
+			break;
+		case SectionsPagerAdapter.TAB_BYTES:
+			connectionManager.setReceptionMode(ConnectionManager.MODE_BYTES);
+			break;
+		}
 	}
 
 	@Override
@@ -143,7 +146,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	protected void onStart() {
 		super.onStart();
 		Log.d(TAG, "-- onStart --");
-		// intentaConnectarAmbLaPlaca();
+		intentaConnectarAmbLaPlaca();
 	}
 
 	@Override
@@ -242,6 +245,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 		case ConnectionManager.ACTION_BITS_RECEPTION:
 			processBitsCommandFromModule((BitsCommand) msg.obj);
 			break;
+		case ConnectionManager.ACTION_BYTES_RECEPTION:
+			processBytesCommandFromModule((BytesCommand) msg.obj);
+			break;
 		}
 	}
 
@@ -289,16 +295,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	//
 	// ////////////////////////////////////////////////////////////////////////
 	private void processBitsCommandFromModule(BitsCommand command) {
-		if (activeTab == TAB_BITS) {
-			BitsFragment fragment = (BitsFragment) sectionsPagerAdapter.getItem(TAB_BITS);
+		if (activeTab == SectionsPagerAdapter.TAB_BITS) {
+			BitsFragment fragment = (BitsFragment) sectionsPagerAdapter.getItem(SectionsPagerAdapter.TAB_BITS);
 			fragment.displayReceivedCommand(command);
 		}
 	}
 
 	@Override
 	public void onSendBitsCommand(BitsCommand command) {
+		Log.i(TAG, "Comanda: " + command);
 		try {
-			Log.i(TAG, "Comanda: " + command);
 			connectionManager.sendCommand(command);
 		} catch (Exception e) {
 			Log.e(TAG, "Error enviant comanda: " + e);
@@ -312,22 +318,27 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	//
 	// ////////////////////////////////////////////////////////////////////////
 
-	private void processBytesFromModule(BytesCommand bytes) {
-		if (activeTab == TAB_BYTES) {
-			// BytesFragment fragment = (BytesFragment) sectionsPagerAdapter.getItem(TAB_BYTES);
-			// fragment.displayReceivedCommand(command);
+	private void processBytesCommandFromModule(BytesCommand command) {
+		if (activeTab == SectionsPagerAdapter.TAB_BYTES) {
+			BytesFragment fragment = (BytesFragment) sectionsPagerAdapter.getItem(SectionsPagerAdapter.TAB_BYTES);
+			fragment.displayReceivedCommand(command);
 		}
 	}
 
 	@Override
 	public void onSendBytesCommand(BytesCommand command) {
-		// try {
-		// Log.i(TAG, "Bytes: " + bytes);
-		// connectionManager.sendCommand(bytes);
-		// } catch (Exception e) {
-		// Log.e(TAG, "Error enviant comanda: " + e);
-		// Toast.makeText(this, "Error enviant comanda: " + command, Toast.LENGTH_SHORT).show();
-		// }
+		Log.i(TAG, "Bytes: " + Arrays.toString(command.array));
+		try {
+			connectionManager.sendCommand(command);
+		} catch (Exception e) {
+			Log.e(TAG, "Error enviant comanda: " + e);
+			Toast.makeText(this, "Error enviant comanda: " + command, Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	@Override
+	public void onChangedReceptionLength(int receptionLength) {
+		connectionManager.setReceptionLength(receptionLength);
 	}
 
 }

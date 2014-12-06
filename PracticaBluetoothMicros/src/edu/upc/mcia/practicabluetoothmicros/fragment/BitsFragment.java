@@ -63,7 +63,7 @@ public class BitsFragment extends Fragment {
 		((Button) view.findViewById(R.id.sendButton)).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				onButtonPressed();
+				onSendButtonPressed();
 			}
 		});
 
@@ -86,7 +86,7 @@ public class BitsFragment extends Fragment {
 		listener = null;
 	}
 
-	private void onButtonPressed() {
+	private void onSendButtonPressed() {
 		if (listener != null) {
 			BitsCommand command = new BitsCommand();
 			command.bit0 = controls[0].isChecked();

@@ -1,7 +1,9 @@
 package edu.upc.mcia.practicabluetoothmicros.fragment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -10,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -19,8 +22,8 @@ import edu.upc.mcia.practicabluetoothmicros.command.BytesCommand;
 public class BytesFragment extends Fragment {
 
 	// Constant
-	private static final int INITIAL_INDICATORS = 5;
-	private static final int INITIAL_CONTROLS = 5;
+	public static final int INITIAL_INDICATORS = 5;
+	public static final int INITIAL_CONTROLS = 5;
 
 	// Listener
 	private OnBytesFragmentListener listener;
@@ -28,6 +31,12 @@ public class BytesFragment extends Fragment {
 	// Byte indicators and controls
 	private LinearLayout indicators;
 	private LinearLayout controls;
+
+	// Change send/reception length controls
+	private TextView lengthIndicatorsText;
+	private TextView lengthControlsText;
+	private int lengthIndicators;
+	private int lengthControls;
 
 	public static BytesFragment newInstance() {
 		BytesFragment fragment = new BytesFragment();
@@ -37,7 +46,8 @@ public class BytesFragment extends Fragment {
 	}
 
 	public BytesFragment() {
-		// Required empty public constructor
+		lengthIndicators = INITIAL_INDICATORS;
+		lengthControls = INITIAL_CONTROLS;
 	}
 
 	@Override
@@ -52,21 +62,57 @@ public class BytesFragment extends Fragment {
 		// Inflate the layout for this fragment
 		View view = inflater.inflate(R.layout.fragment_bytes, container, false);
 
-		// Get references to the indicators
+		// Build indicators
 		indicators = (LinearLayout) view.findViewById(R.id.linearBytesDisplay);
+		lengthIndicatorsText = (TextView) view.findViewById(R.id.indicatorsLenthText);
+		lengthIndicatorsText.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				showChangeReceptionLengthDialog();
+			}
+		});
+		buildIndicators();
+
+		// Build controls
+		controls = (LinearLayout) view.findViewById(R.id.linearBytesControl);
+		lengthControlsText = (TextView) view.findViewById(R.id.controlsLenthText);
+		lengthControlsText.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				showChangeSendingLengthDialog();
+			}
+		});
+		buildControls();
+
+		// Link button to function
+		((Button) view.findViewById(R.id.sendButton)).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				onSendButtonPressed();
+			}
+		});
+
+		return view;
+	}
+
+	public void buildIndicators() {
 		indicators.removeAllViews();
-		for (int i = 0; i < INITIAL_INDICATORS; i++) {
+		for (int i = 0; i < lengthIndicators; i++) {
 			TextView text = new TextView(getActivity());
 			text.setText("-");
-			text.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+			LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			params.setMargins(12, 0, 12, 0);
+			text.setLayoutParams(params);
 			indicators.addView(text);
 		}
+		displayReceivedCommand(new BytesCommand(lengthIndicators));
+		lengthIndicatorsText.setText(Integer.toString(lengthIndicators));
+	}
 
-		// Get references to the controls
-		controls = (LinearLayout) view.findViewById(R.id.linearBytesControl);
+	public void buildControls() {
 		controls.removeAllViews();
-		TextWatcher controlWatcher = new ByteControlWatcher();
-		for (int i = 0; i < INITIAL_CONTROLS; i++) {
+		TextWatcher controlWatcher = new ByteTextWatcher();
+		for (int i = 0; i < lengthControls; i++) {
 			EditText text = new EditText(getActivity());
 			text.setText("0");
 			text.setInputType(EditorInfo.TYPE_CLASS_NUMBER);
@@ -74,8 +120,7 @@ public class BytesFragment extends Fragment {
 			text.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 			controls.addView(text);
 		}
-
-		return view;
+		lengthControlsText.setText(Integer.toString(lengthControls));
 	}
 
 	@Override
@@ -94,23 +139,72 @@ public class BytesFragment extends Fragment {
 		listener = null;
 	}
 
-	public void onButtonPressed() {
-		if (listener != null) {
-			listener.onSendBytesCommand(new BytesCommand());
+	public void showChangeReceptionLengthDialog() {
+		String[] choices = new String[BytesCommand.MAX_LENGTH - BytesCommand.MIN_LENGTH + 1];
+		for (int i = BytesCommand.MIN_LENGTH; i <= BytesCommand.MAX_LENGTH; i++) {
+			choices[i - BytesCommand.MIN_LENGTH] = Integer.toString(i);
+		}
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		builder.setTitle("Tria el numero de bytes").setItems(choices, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				lengthIndicators = which + BytesCommand.MIN_LENGTH;
+				buildIndicators();
+			}
+		});
+		builder.create().show();
+	}
+
+	public void showChangeSendingLengthDialog() {
+		String[] choices = new String[BytesCommand.MAX_LENGTH - BytesCommand.MIN_LENGTH + 1];
+		for (int i = BytesCommand.MIN_LENGTH; i <= BytesCommand.MAX_LENGTH; i++) {
+			choices[i - BytesCommand.MIN_LENGTH] = Integer.toString(i);
+		}
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		builder.setTitle("Tria el numero de bytes").setItems(choices, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				lengthControls = which + BytesCommand.MIN_LENGTH;
+				buildControls();
+			}
+		});
+		builder.create().show();
+	}
+
+	public void onSendButtonPressed() {
+		if (listener != null && controls != null) {
+			int len = controls.getChildCount();
+			BytesCommand command = new BytesCommand(len);
+			for (int i = 0; i < len; i++) {
+				String text = ((EditText) controls.getChildAt(i)).getText().toString();
+				int val = 0;
+				try {
+					val = Integer.parseInt(text);
+				} catch (NumberFormatException nfe) {
+				}
+				command.array[i] = val;
+			}
+			listener.onSendBytesCommand(command);
 		}
 	}
 
 	public void displayReceivedCommand(BytesCommand command) {
-
+		if (indicators != null) {
+			String[] values = command.toStringArray();
+			for (int i = 0; (i < indicators.getChildCount()) && (i < values.length); i++) {
+				TextView text = (TextView) indicators.getChildAt(i);
+				text.setText(values[i]);
+			}
+		}
 	}
 
 	public interface OnBytesFragmentListener {
 
 		public void onSendBytesCommand(BytesCommand command);
 
+		public void onChangedReceptionLength(int receptionLength);
+
 	}
 
-	private static class ByteControlWatcher implements TextWatcher {
+	private static class ByteTextWatcher implements TextWatcher {
 
 		@Override
 		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -137,4 +231,5 @@ public class BytesFragment extends Fragment {
 			}
 		}
 	}
+
 }

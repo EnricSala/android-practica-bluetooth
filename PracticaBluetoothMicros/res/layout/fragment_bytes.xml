@@ -29,13 +29,26 @@
             android:orientation="vertical"
             android:padding="26dp" >
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="4dp"
-                android:text="Indicadors"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
+                android:layout_marginBottom="4dp" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Indicadors"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <TextView
+                    android:id="@+id/indicatorsLenthText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="12dp"
+                    android:text="5"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/linearBytesDisplay"
@@ -55,13 +68,26 @@
             android:orientation="vertical"
             android:padding="26dp" >
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="4dp"
-                android:text="Controls"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
+                android:layout_marginBottom="4dp" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Controls"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <TextView
+                    android:id="@+id/controlsLenthText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="12dp"
+                    android:text="5"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/linearBytesControl"
@@ -70,6 +96,14 @@
                 android:layout_gravity="center_horizontal"
                 android:orientation="horizontal" >
             </LinearLayout>
+
+            <CheckBox
+                android:id="@+id/checkboxAutochecksum"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="0dp"
+                android:text="Auto checksum"
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/sendButton"

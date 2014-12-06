@@ -6,8 +6,10 @@ import android.support.v13.app.FragmentPagerAdapter;
 
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-	// Constant
+	// Constants
 	private static final int NUM_FRAGMENTS = 2;
+	public static final int TAB_BITS = 0;
+	public static final int TAB_BYTES = 1;
 
 	// Fragment cache
 	private Fragment[] fragmentCache;
@@ -20,12 +22,12 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 	@Override
 	public Fragment getItem(int position) {
 		switch (position) {
-		case 0:
+		case TAB_BITS:
 			if (fragmentCache[0] == null) {
 				fragmentCache[0] = BitsFragment.newInstance();
 			}
 			return fragmentCache[0];
-		case 1:
+		case TAB_BYTES:
 			if (fragmentCache[1] == null) {
 				fragmentCache[1] = BytesFragment.newInstance();
 			}
@@ -41,12 +43,11 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
 	@Override
 	public CharSequence getPageTitle(int position) {
-		// Locale loc = Locale.ENGLISH;
 		switch (position) {
-		case 0:
-			return "Bits"; // getString(R.string.title_section1).toUpperCase(loc);
-		case 1:
-			return "Bytes"; // getString(R.string.title_section2).toUpperCase(loc);
+		case TAB_BITS:
+			return "Bits";
+		case TAB_BYTES:
+			return "Bytes";
 		}
 		return null;
 	}
