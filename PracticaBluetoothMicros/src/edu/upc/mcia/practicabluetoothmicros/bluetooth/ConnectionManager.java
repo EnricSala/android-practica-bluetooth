@@ -148,7 +148,7 @@ public class ConnectionManager {
 					handler.obtainMessage(ACTION_CONNECTING, retryCount, 0).sendToTarget();
 					Log.e(TAG, "Error connectant: " + ioe.getMessage());
 					try {
-						Thread.sleep(1000); // Dorm una estona abans de tornar a intentar
+						Thread.sleep(500); // Espera abans de tornar a intentar
 					} catch (InterruptedException ie) {
 					}
 				}
