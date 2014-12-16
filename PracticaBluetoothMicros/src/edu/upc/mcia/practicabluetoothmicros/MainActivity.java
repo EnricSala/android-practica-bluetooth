@@ -1,7 +1,11 @@
 package edu.upc.mcia.practicabluetoothmicros;
 
+import java.util.Arrays;
+
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
@@ -10,23 +14,29 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Message;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.RadioButton;
 import android.widget.Toast;
 import edu.upc.mcia.practicabluetoothmicros.bluetooth.BluetoothEventHandler;
-import edu.upc.mcia.practicabluetoothmicros.bluetooth.Command;
 import edu.upc.mcia.practicabluetoothmicros.bluetooth.ConnectionManager;
+import edu.upc.mcia.practicabluetoothmicros.command.BitsCommand;
+import edu.upc.mcia.practicabluetoothmicros.command.BytesCommand;
+import edu.upc.mcia.practicabluetoothmicros.fragment.BitsFragment;
+import edu.upc.mcia.practicabluetoothmicros.fragment.BytesFragment;
+import edu.upc.mcia.practicabluetoothmicros.fragment.SectionsPagerAdapter;
 
-public class MainActivity extends Activity implements BluetoothEventHandler.BluetoothEventListener {
+public class MainActivity extends Activity implements ActionBar.TabListener, BluetoothEventHandler.BluetoothEventListener, BitsFragment.OnBitsFragmentListener, BytesFragment.OnBytesFragmentListener {
 
 	// Constants
 	private final static String TAG = "UI";
 	private final static int ENABLE_BLUETOOTH_REQUEST = 30862;
+
+	// Navigation support
+	private SectionsPagerAdapter sectionsPagerAdapter;
+	private ViewPager viewPager;
+	private int activeTab;
 
 	// Dialogs
 	private ProgressDialog progressDialog;
@@ -40,10 +50,6 @@ public class MainActivity extends Activity implements BluetoothEventHandler.Blue
 	private BluetoothAdapter bluetoothAdapter;
 	private ConnectionManager connectionManager;
 
-	// Boolean indicators and controls
-	private RadioButton[] indicators;
-	private CheckBox[] controls;
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -54,39 +60,47 @@ public class MainActivity extends Activity implements BluetoothEventHandler.Blue
 		bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		connectionManager = new ConnectionManager(bluetoothAdapter, this);
 
-		// Read and scale drawables
-		Bitmap bitmap;
-		bitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.ic_tick_verd)).getBitmap();
-		tickDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 75, 75, true));
-		bitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.ic_creu_vermella)).getBitmap();
-		errorDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 75, 75, true));
+		// Set up the action bar.
+		final ActionBar actionBar = getActionBar();
+		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
-		// Get references to the indicators
-		indicators = new RadioButton[4];
-		indicators[0] = (RadioButton) findViewById(R.id.radio1);
-		indicators[1] = (RadioButton) findViewById(R.id.radio2);
-		indicators[2] = (RadioButton) findViewById(R.id.radio3);
-		indicators[3] = (RadioButton) findViewById(R.id.radio4);
+		// Create the adapter that will return a fragment for each of the three
+		// primary sections of the activity.
+		sectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
 
-		// Get references to the controls
-		controls = new CheckBox[4];
-		controls[0] = (CheckBox) findViewById(R.id.check1);
-		controls[1] = (CheckBox) findViewById(R.id.check2);
-		controls[2] = (CheckBox) findViewById(R.id.check3);
-		controls[3] = (CheckBox) findViewById(R.id.check4);
+		// Set up the ViewPager with the sections adapter.
+		viewPager = (ViewPager) findViewById(R.id.viewpager);
+		viewPager.setAdapter(sectionsPagerAdapter);
 
-		// Link button to function
-		((Button) findViewById(R.id.sendButton)).setOnClickListener(new View.OnClickListener() {
+		// When swiping between different sections, select the corresponding
+		// tab. We can also use ActionBar.Tab#select() to do this if we have
+		// a reference to the Tab.
+		viewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
 			@Override
-			public void onClick(View view) {
-				sendCommandToModule();
+			public void onPageSelected(int position) {
+				actionBar.setSelectedNavigationItem(position);
 			}
 		});
+
+		// For each of the sections in the app, add a tab to the action bar.
+		for (int i = 0; i < sectionsPagerAdapter.getCount(); i++) {
+			// Create a tab with text corresponding to the page title defined by
+			// the adapter. Also specify this Activity object, which implements
+			// the TabListener interface, as the callback (listener) for when
+			// this tab is selected.
+			actionBar.addTab(actionBar.newTab().setText(sectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
+		}
+
+		// Read and scale drawables
+		Bitmap tickBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.ic_tick_verd)).getBitmap();
+		tickDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(tickBitmap, 75, 75, true));
+		Bitmap crossBitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.ic_creu_vermella)).getBitmap();
+		errorDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(crossBitmap, 75, 75, true));
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
+		// Inflate the menu; this adds items to the action bar if it is present
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
@@ -95,12 +109,37 @@ public class MainActivity extends Activity implements BluetoothEventHandler.Blue
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle action bar item clicks here. The action bar will
 		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
+		// as you specify a parent activity in AndroidManifest.xml
 		int id = item.getItemId();
 		if (id == R.id.action_settings) {
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+		// When the given tab is selected, switch to the corresponding page in the ViewPager
+		viewPager.setCurrentItem(tab.getPosition());
+		activeTab = tab.getPosition();
+
+		// Change reception mode
+		switch (activeTab) {
+		case SectionsPagerAdapter.TAB_BITS:
+			connectionManager.setReceptionMode(ConnectionManager.MODE_BITS);
+			break;
+		case SectionsPagerAdapter.TAB_BYTES:
+			connectionManager.setReceptionMode(ConnectionManager.MODE_BYTES);
+			break;
+		}
+	}
+
+	@Override
+	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+	}
+
+	@Override
+	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
 	}
 
 	@Override
@@ -203,8 +242,11 @@ public class MainActivity extends Activity implements BluetoothEventHandler.Blue
 		case ConnectionManager.ACTION_DISCONNECTED:
 			intentaConnectarAmbLaPlaca();
 			break;
-		case ConnectionManager.ACTION_RECEPTION:
-			processCommandFromModule((Command) msg.obj);
+		case ConnectionManager.ACTION_BITS_RECEPTION:
+			processBitsCommandFromModule((BitsCommand) msg.obj);
+			break;
+		case ConnectionManager.ACTION_BYTES_RECEPTION:
+			processBytesCommandFromModule((BytesCommand) msg.obj);
 			break;
 		}
 	}
@@ -247,25 +289,56 @@ public class MainActivity extends Activity implements BluetoothEventHandler.Blue
 		}.start();
 	}
 
-	private void processCommandFromModule(Command command) {
-		indicators[0].setChecked(command.bit0);
-		indicators[1].setChecked(command.bit1);
-		indicators[2].setChecked(command.bit2);
-		indicators[3].setChecked(command.bit3);
+	// ////////////////////////////////////////////////////////////////////////
+	//
+	// Events of Bits tab
+	//
+	// ////////////////////////////////////////////////////////////////////////
+	private void processBitsCommandFromModule(BitsCommand command) {
+		if (activeTab == SectionsPagerAdapter.TAB_BITS) {
+			BitsFragment fragment = (BitsFragment) sectionsPagerAdapter.getItem(SectionsPagerAdapter.TAB_BITS);
+			fragment.displayReceivedCommand(command);
+		}
 	}
 
-	private void sendCommandToModule() {
-		Command command = new Command();
-		command.bit0 = controls[0].isChecked();
-		command.bit1 = controls[1].isChecked();
-		command.bit2 = controls[2].isChecked();
-		command.bit3 = controls[3].isChecked();
+	@Override
+	public void onSendBitsCommand(BitsCommand command) {
+		Log.i(TAG, "Comanda: " + command);
 		try {
-			Log.i(TAG, "Comanda: " + command);
 			connectionManager.sendCommand(command);
 		} catch (Exception e) {
 			Log.e(TAG, "Error enviant comanda: " + e);
 			Toast.makeText(this, "Error enviant comanda: " + command, Toast.LENGTH_SHORT).show();
 		}
 	}
+
+	// ////////////////////////////////////////////////////////////////////////
+	//
+	// Events of Bytes tab
+	//
+	// ////////////////////////////////////////////////////////////////////////
+
+	private void processBytesCommandFromModule(BytesCommand command) {
+		if (activeTab == SectionsPagerAdapter.TAB_BYTES) {
+			BytesFragment fragment = (BytesFragment) sectionsPagerAdapter.getItem(SectionsPagerAdapter.TAB_BYTES);
+			fragment.displayReceivedCommand(command);
+		}
+	}
+
+	@Override
+	public void onSendBytesCommand(BytesCommand command) {
+		Log.i(TAG, "Bytes: " + Arrays.toString(command.array));
+		try {
+			connectionManager.sendCommand(command);
+		} catch (Exception e) {
+			Log.e(TAG, "Error enviant comanda: " + e);
+			Toast.makeText(this, "Error enviant comanda: " + command, Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	@Override
+	public void onChangedReceptionLength(int receptionLength) {
+		connectionManager.setReceptionLength(receptionLength);
+	}
+
 }

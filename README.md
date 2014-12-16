@@ -21,6 +21,6 @@ Funcionament
 
 3. A ajustos de Bluetooth, fer una cerca de dispositus per emparellar el mòdul RN42.
 
-4. Emparellar el mòdul fent servir la contrassenya 1234.
+4. Emparellar el mòdul (fent servir la contrassenya 1234 si la demana).
 
 5. Obrir l'aplicació Android de la pràctica.

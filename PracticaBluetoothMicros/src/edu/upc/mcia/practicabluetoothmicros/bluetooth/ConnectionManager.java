@@ -3,26 +3,34 @@ package edu.upc.mcia.practicabluetoothmicros.bluetooth;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 import edu.upc.mcia.practicabluetoothmicros.bluetooth.BluetoothEventHandler.BluetoothEventListener;
+import edu.upc.mcia.practicabluetoothmicros.command.BitsCommand;
+import edu.upc.mcia.practicabluetoothmicros.command.BytesCommand;
 
 public class ConnectionManager {
 
 	// Constants
-	public static final String TAG = "BT_MANAGER";
+	private static final String TAG = "BT_MANAGER";
 	private final static UUID UUID_SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 	public static final int ACTION_SEARCHING_DEVICE = 1;
 	public static final int ACTION_SEARCHING_FAILED = 2;
 	public static final int ACTION_CONNECTING = 3;
 	public static final int ACTION_CONNECTED = 4;
 	public static final int ACTION_DISCONNECTED = 5;
-	public static final int ACTION_RECEPTION = 6;
+	public static final int ACTION_BITS_RECEPTION = 6;
+	public static final int ACTION_BYTES_RECEPTION = 7;
+
+	// Reception modes
+	public static final int MODE_BITS = 0;
+	public static final int MODE_BYTES = 1;
 
 	// Bluetooth
 	private BluetoothAdapter bluetoothAdapter;
@@ -32,13 +40,19 @@ public class ConnectionManager {
 	private CommunicationThread communicationThread;
 
 	// Handlers & Events
-	private BluetoothEventHandler handler;
-	private static volatile boolean forceDisconect;
+	private final BluetoothEventHandler handler;
+
+	// Internal variables
+	private final AtomicBoolean forceDisconnect;
+	private final AtomicInteger receptionMode;
+	private final AtomicInteger receptionLength;
 
 	public ConnectionManager(BluetoothAdapter bluetoothAdapter, BluetoothEventListener listener) {
-		forceDisconect = false;
+		this.forceDisconnect = new AtomicBoolean(false);
+		this.receptionMode = new AtomicInteger(MODE_BITS);
+		this.receptionLength = new AtomicInteger(1);
 		this.bluetoothAdapter = bluetoothAdapter;
-		handler = new BluetoothEventHandler(listener);
+		this.handler = new BluetoothEventHandler(listener);
 	}
 
 	public synchronized void turnOn() {
@@ -59,7 +73,7 @@ public class ConnectionManager {
 	}
 
 	public synchronized void turnOff() {
-		forceDisconect = true;
+		forceDisconnect.set(true);
 		if (communicationThread != null) {
 			communicationThread.cancel();
 			communicationThread = null;
@@ -70,7 +84,28 @@ public class ConnectionManager {
 		}
 	}
 
-	public synchronized void sendCommand(Command command) throws Exception {
+	public void setReceptionMode(int newMode) {
+		if (newMode == MODE_BITS || newMode == MODE_BYTES) {
+			receptionMode.set(newMode);
+		} else {
+			throw new IllegalArgumentException("Invalid bluetooth reception mode: " + newMode);
+		}
+	}
+
+	public void setReceptionLength(int newLength) {
+		if (newLength > 0 && newLength < BytesCommand.MAX_LENGTH) {
+			receptionLength.set(newLength);
+			communicationThread.onReceptionLengthChange(newLength);
+		} else {
+			throw new IllegalArgumentException("Invalid bluetooth reception length: " + newLength);
+		}
+	}
+
+	public synchronized void sendCommand(BitsCommand command) throws Exception {
+		communicationThread.write(command);
+	}
+
+	public synchronized void sendCommand(BytesCommand command) throws Exception {
 		communicationThread.write(command);
 	}
 
@@ -82,7 +117,7 @@ public class ConnectionManager {
 		private final BluetoothDevice device;
 
 		public ConnectThread(BluetoothDevice bluetoothDevice) {
-			forceDisconect = false;
+			forceDisconnect.set(false);
 			BluetoothSocket temp = null;
 			device = bluetoothDevice;
 			try {
@@ -103,7 +138,7 @@ public class ConnectionManager {
 			Log.d(TAG, "-- Connect Thread started --");
 			bluetoothAdapter.cancelDiscovery();
 			handler.obtainMessage(ACTION_CONNECTING, retryCount, 0).sendToTarget();
-			while (!connexioEstablerta && !forceDisconect) {
+			while (!connexioEstablerta && !forceDisconnect.get()) {
 				try {
 					socket.connect();
 					connexioEstablerta = true;
@@ -141,6 +176,8 @@ public class ConnectionManager {
 		private final InputStream input;
 		private final OutputStream output;
 
+		private BytesCommand bytesCommand;
+
 		public CommunicationThread(BluetoothSocket bluetoothSocket) {
 			socket = bluetoothSocket;
 			InputStream tmpIn = null;
@@ -157,24 +194,46 @@ public class ConnectionManager {
 		public void run() {
 			Log.d(TAG, "-- Communication Thread started --");
 			handler.obtainMessage(ACTION_CONNECTED).sendToTarget();
+			bytesCommand = new BytesCommand(receptionLength.get());
 			int value;
 			try {
-				while (!forceDisconect) {
+				while (!forceDisconnect.get()) {
 					value = input.read();
-					Log.d(TAG, "@Rebut: 0x0" + Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
-					handler.obtainMessage(ACTION_RECEPTION, Command.decode(value)).sendToTarget();
+					// Log.d(TAG, "@Rebut: 0x" + Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
+					switch (receptionMode.get()) {
+					case MODE_BITS:
+						handler.obtainMessage(ACTION_BITS_RECEPTION, BitsCommand.decode(value)).sendToTarget();
+						break;
+					case MODE_BYTES:
+						if (bytesCommand.addValue(value)) {
+							handler.obtainMessage(ACTION_BYTES_RECEPTION, bytesCommand).sendToTarget();
+							bytesCommand = new BytesCommand(receptionLength.get());
+						}
+						break;
+					}
 				}
 			} catch (Exception e) {
 			}
-			if (!forceDisconect) {
+			if (!forceDisconnect.get()) {
 				Log.w(TAG, "S'ha perdut la connexio bluetooth!");
 				handler.obtainMessage(ACTION_DISCONNECTED).sendToTarget();
 			}
 			Log.d(TAG, "-- Communication Thread closed --");
 		}
 
-		public void write(Command command) throws Exception {
+		public void write(BitsCommand command) throws Exception {
 			output.write(0x0F & command.encode());
+		}
+
+		public void write(BytesCommand command) throws Exception {
+			int[] array = command.array;
+			for (int val : array) {
+				output.write(val);
+			}
+		}
+
+		public void onReceptionLengthChange(int newLength) {
+			this.bytesCommand = new BytesCommand(receptionLength.get());
 		}
 
 		public void cancel() {
