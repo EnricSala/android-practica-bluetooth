@@ -226,10 +226,7 @@ public class ConnectionManager {
 		}
 
 		public void write(BytesCommand command) throws Exception {
-			int[] array = command.array;
-			for (int val : array) {
-				output.write(val);
-			}
+			output.write(command.toByteArray());
 		}
 
 		public void onReceptionLengthChange(int newLength) {

@@ -16,7 +16,12 @@ public class BytesCommand {
 		this.count = 0;
 	}
 
-	public synchronized boolean addValue(int value) {
+	public BytesCommand(int[] initialValues) {
+		this.array = initialValues;
+		this.count = initialValues.length;
+	}
+
+	public boolean addValue(int value) {
 		if (count == 0) {
 			if (value == START_BYTE) {
 				array[0] = value;
@@ -29,7 +34,7 @@ public class BytesCommand {
 		return isComplete();
 	}
 
-	public synchronized boolean isComplete() {
+	public boolean isComplete() {
 		return count >= array.length;
 	}
 
@@ -53,4 +58,5 @@ public class BytesCommand {
 		}
 		return bytes;
 	}
+
 }
