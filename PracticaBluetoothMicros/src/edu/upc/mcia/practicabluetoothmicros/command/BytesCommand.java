@@ -46,4 +46,11 @@ public class BytesCommand {
 		return strs;
 	}
 
+	public byte[] toByteArray() {
+		byte[] bytes = new byte[array.length];
+		for (int i = 0; i < array.length; i++) {
+			bytes[i] = (byte) (array[i] & 0xFF);
+		}
+		return bytes;
+	}
 }
