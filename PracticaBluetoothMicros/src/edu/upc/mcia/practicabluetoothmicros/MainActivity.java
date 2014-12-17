@@ -8,17 +8,23 @@ import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
+import edu.upc.mcia.practicabluetoothmicros.bluetooth.BluetoothCommService;
+import edu.upc.mcia.practicabluetoothmicros.bluetooth.BluetoothCommService.BluetoothCommServiceBinder;
 import edu.upc.mcia.practicabluetoothmicros.bluetooth.BluetoothEventHandler;
 import edu.upc.mcia.practicabluetoothmicros.bluetooth.ConnectionManager;
 import edu.upc.mcia.practicabluetoothmicros.command.BitsCommand;
@@ -49,6 +55,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	// Bluetooth
 	private BluetoothAdapter bluetoothAdapter;
 	private ConnectionManager connectionManager;
+
+	// Bluetooth Service
+	private boolean isBlServiceBound = false;
+	private BluetoothCommService blService;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -146,7 +156,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	protected void onStart() {
 		super.onStart();
 		Log.d(TAG, "-- onStart --");
-		intentaConnectarAmbLaPlaca();
+		// intentaConnectarAmbLaPlaca();
+
+		// Bind to LocalService
+		Intent intent = new Intent(this, BluetoothCommService.class);
+		bindService(intent, blServiceConnection, Context.BIND_AUTO_CREATE);
+
 	}
 
 	@Override
@@ -193,6 +208,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 		super.onStop();
 		Log.d(TAG, "-- onStop --");
 		connectionManager.turnOff();
+
+		if (isBlServiceBound) {
+			unbindService(blServiceConnection);
+			isBlServiceBound = false;
+		}
+
 		finish();
 	}
 
@@ -251,6 +272,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 		}
 	}
 
+	// ////////////////////////////////////////////////////////////////////////
+	//
+	// Display Dialogs
+	//
+	// ////////////////////////////////////////////////////////////////////////
+
 	private void showSuccessDialog() {
 		alertDialog = new AlertDialog.Builder(this).create();
 		alertDialog.setTitle("Bluetooth connectat!");
@@ -294,6 +321,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	// Events of Bits tab
 	//
 	// ////////////////////////////////////////////////////////////////////////
+
 	private void processBitsCommandFromModule(BitsCommand command) {
 		if (activeTab == SectionsPagerAdapter.TAB_BITS) {
 			BitsFragment fragment = (BitsFragment) sectionsPagerAdapter.getItem(SectionsPagerAdapter.TAB_BITS);
@@ -340,5 +368,29 @@ public class MainActivity extends Activity implements ActionBar.TabListener, Blu
 	public void onChangedReceptionLength(int receptionLength) {
 		connectionManager.setReceptionLength(receptionLength);
 	}
+
+	// ////////////////////////////////////////////////////////////////////////
+	//
+	// Bluetooth Service binding
+	//
+	// ////////////////////////////////////////////////////////////////////////
+
+	private ServiceConnection blServiceConnection = new ServiceConnection() {
+
+		@Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			Log.d(TAG, "Service bound");
+			// We've bound to LocalService, cast the IBinder and get LocalService instance
+			BluetoothCommServiceBinder binder = (BluetoothCommServiceBinder) service;
+			blService = binder.getService();
+			isBlServiceBound = true;
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName className) {
+			Log.d(TAG, "Service unbound");
+			isBlServiceBound = false;
+		}
+	};
 
 }
