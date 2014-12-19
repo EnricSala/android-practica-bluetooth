@@ -1,4 +1,4 @@
-package edu.upc.mcia.practicabluetoothmicros;
+package edu.upc.mcia.practicabluetoothmicros.test;
 
 import junit.framework.TestCase;
 import edu.upc.mcia.practicabluetoothmicros.command.BytesCommand;
