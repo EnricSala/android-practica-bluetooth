@@ -149,6 +149,7 @@ public class BytesFragment extends Fragment {
 			public void onClick(DialogInterface dialog, int which) {
 				lengthIndicators = which + BytesCommand.MIN_LENGTH;
 				buildIndicators();
+				listener.onChangedReceptionLength(lengthIndicators);
 			}
 		});
 		builder.create().show();

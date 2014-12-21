@@ -95,7 +95,9 @@ public class ConnectionManager {
 	public void setReceptionLength(int newLength) {
 		if (newLength > 0 && newLength < BytesCommand.MAX_LENGTH) {
 			receptionLength.set(newLength);
-			communicationThread.onReceptionLengthChange(newLength);
+			if (communicationThread != null) {
+				communicationThread.onReceptionLengthChange(newLength);
+			}
 		} else {
 			throw new IllegalArgumentException("Invalid bluetooth reception length: " + newLength);
 		}
